@@ -16,10 +16,10 @@ PwmOut pwmv_2(p24);
 PwmOut pwmw_1(p25);
 PwmOut pwmw_2(p26);
 
-bool holestatus[3];
-InterruptIn hole1(p5);
-InterruptIn hole2(p6);
-InterruptIn hole3(p7);
+bool hallstatus[3];
+InterruptIn hall1(p5);
+InterruptIn hall2(p6);
+InterruptIn hall3(p7);
 
 AnalogIn throttle(p19); // throttle is 0.0-1.0 float value. throttle value is read from some analog read pin.
 
@@ -39,9 +39,9 @@ float valuetomap(float x, float in_min, float in_max, float out_min ,float out_m
 void bldcval(){
     // check hall sensor value
     int HallVal = 0;
-    if (holestatus[0]) HallVal += 1;
-    if (holestatus[1]) HallVal += 2;
-    if (holestatus[2]) HallVal += 4;
+    if (hallstatus[0]) HallVal += 1;
+    if (hallstatus[1]) HallVal += 2;
+    if (hallstatus[2]) HallVal += 4;
     
     switch (HallVal) {
         // step-1
@@ -138,23 +138,24 @@ void pushDown(){
     cled = 0;
 }
 
-void hole1interrupt_rise() {
-    holestatus[0] = true;
+// hall sensor check interrupt functions.
+void hall1interrupt_rise() {
+    hallstatus[0] = true;
 }
-void hole1interrupt_fall() {
-    holestatus[0] = false;
+void hall1interrupt_fall() {
+    hallstatus[0] = false;
 }
-void hole2interrupt_rise() {
-    holestatus[1] = true;
+void hall2interrupt_rise() {
+    hallstatus[1] = true;
 }
-void hole2interrupt_fall() {
-    holestatus[1] = false;
+void hall2interrupt_fall() {
+    hallstatus[1] = false;
 }
-void hole3interrupt_rise() {
-    holestatus[2] = true;
+void hall3interrupt_rise() {
+    hallstatus[2] = true;
 }
-void hole3interrupt_fall() {
-    holestatus[2] = false;
+void hall3interrupt_fall() {
+    hallstatus[2] = false;
 }
 
 int main() {
@@ -167,14 +168,14 @@ int main() {
     pwmv_2.period_us(PWM_T_TIME);
     pwmw_2.period_us(PWM_T_TIME);
     
-    // hole sensor status
-    holestatus[0] = holestatus[1] = holestatus[2] = false;
-    hole1.rise(&hole1interrupt_rise);
-    hole1.fall(&hole1interrupt_fall);
-    hole2.rise(&hole2interrupt_rise);
-    hole2.fall(&hole2interrupt_fall);
-    hole3.rise(&hole3interrupt_rise);
-    hole3.fall(&hole2interrupt_fall);
+    // hall sensor status
+    hallstatus[0] = hallstatus[1] = hallstatus[2] = false;
+    hall1.rise(&hall1interrupt_rise);
+    hall1.fall(&hall1interrupt_fall);
+    hall2.rise(&hall2interrupt_rise);
+    hall2.fall(&hall2interrupt_fall);
+    hall3.rise(&hall3interrupt_rise);
+    hall3.fall(&hall2interrupt_fall);
 
     // frequency controll
     dx = 1.0/(DX_LEN * freq);
