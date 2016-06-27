@@ -44,50 +44,7 @@ void bldcval(){
     if (holestatus[2]) HallVal += 4;
     
     switch (HallVal) {
-        case 1:
-            pwmu_1 = throttle;
-            pwmu_2 = 0.0;
-            
-            pwmv_1 = 1.0;
-            pwmv_2 = 0.0;
-            
-            pwmw_1 = 0.0;
-            pwmw_2 = 1.0;
-        break;
-
-        case 2:
-            pwmu_1 = 0.0;
-            pwmu_2 = 1.0;
-            
-            pwmv_1 = throttle;
-            pwmv_2 = 0.0;
-            
-            pwmw_1 = 1.0;
-            pwmw_2 = 0.0;
-        break;
-
-        case 3:
-            pwmu_1 = throttle;
-            pwmu_2 = 0.0;
-            
-            pwmv_1 = 0.0;
-            pwmv_2 = 1.0;
-            
-            pwmw_1 = 1.0;
-            pwmw_2 = 0.0;
-        break;
-
-        case 4:
-            pwmu_1 = 1.0;
-            pwmu_2 = 0.0;
-            
-            pwmv_1 = 0.0;
-            pwmv_2 = 1.0;
-            
-            pwmw_1 = throttle;
-            pwmw_2 = 0.0;
-        break;
-
+        // step-1
         case 5:
             pwmu_1 = 0.0;
             pwmu_2 = 1.0;
@@ -99,6 +56,43 @@ void bldcval(){
             pwmw_2 = 0.0;
         break;
 
+        // step-2
+        case 1:
+            pwmu_1 = throttle;
+            pwmu_2 = 0.0;
+            
+            pwmv_1 = 1.0;
+            pwmv_2 = 0.0;
+            
+            pwmw_1 = 0.0;
+            pwmw_2 = 1.0;
+        break;
+
+        // step-3
+        case 3:
+            pwmu_1 = throttle;
+            pwmu_2 = 0.0;
+            
+            pwmv_1 = 0.0;
+            pwmv_2 = 1.0;
+            
+            pwmw_1 = 1.0;
+            pwmw_2 = 0.0;
+        break;
+
+        // step-4
+        case 2:
+            pwmu_1 = 0.0;
+            pwmu_2 = 1.0;
+            
+            pwmv_1 = throttle;
+            pwmv_2 = 0.0;
+            
+            pwmw_1 = 1.0;
+            pwmw_2 = 0.0;
+        break;
+
+        // step-5
         case 6:
             pwmu_1 = 1.0;
             pwmu_2 = 0.0;
@@ -108,6 +102,18 @@ void bldcval(){
             
             pwmw_1 = 0.0;
             pwmw_2 = 1.0;
+        break;
+
+        // step-6
+        case 4:
+            pwmu_1 = 1.0;
+            pwmu_2 = 0.0;
+            
+            pwmv_1 = 0.0;
+            pwmv_2 = 1.0;
+            
+            pwmw_1 = throttle;
+            pwmw_2 = 0.0;
         break;
     }
 }
@@ -170,3 +176,4 @@ int main() {
         wait(1);
     }
 }
+
