@@ -138,14 +138,23 @@ void pushDown(){
     cled = 0;
 }
 
-void hole1interrupt() {
-    holestatus[0] = !holestatus[0];
+void hole1interrupt_rise() {
+    holestatus[0] = true;
 }
-void hole2interrupt() {
-    holestatus[1] = !holestatus[1];
+void hole1interrupt_fall() {
+    holestatus[0] = false;
 }
-void hole3interrupt() {
-    holestatus[2] = !holestatus[2];
+void hole2interrupt_rise() {
+    holestatus[1] = true;
+}
+void hole2interrupt_fall() {
+    holestatus[1] = false;
+}
+void hole3interrupt_rise() {
+    holestatus[2] = true;
+}
+void hole3interrupt_fall() {
+    holestatus[2] = false;
 }
 
 int main() {
@@ -160,12 +169,12 @@ int main() {
     
     // hole sensor status
     holestatus[0] = holestatus[1] = holestatus[2] = false;
-    hole1.rise(&hole1interrupt);
-    hole1.fall(&hole1interrupt);
-    hole2.rise(&hole2interrupt);
-    hole2.fall(&hole2interrupt);
-    hole3.rise(&hole3interrupt);
-    hole3.fall(&hole3interrupt);
+    hole1.rise(&hole1interrupt_rise);
+    hole1.fall(&hole1interrupt_fall);
+    hole2.rise(&hole2interrupt_rise);
+    hole2.fall(&hole2interrupt_fall);
+    hole3.rise(&hole3interrupt_rise);
+    hole3.fall(&hole2interrupt_fall);
 
     // frequency controll
     dx = 1.0/(DX_LEN * freq);
