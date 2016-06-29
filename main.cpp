@@ -1,12 +1,19 @@
 #include "mbed.h"
 
+#define DEBUG 1
+#ifdef DEBUG
+#define DBG(...) printf("" __VA_ARGS__)
+#else
+#define DBG(...)
+#endif
+
+
 #define DX_LEN 20
 #define PWM_T_TIME 100
 
 #define FREQ_SIZE 10
 #define MIN_FREQ 10
 #define MAX_FREQ 1000
-
 PwmOut pwmu_1(p21);
 PwmOut pwmu_2(p22);
 
@@ -17,15 +24,15 @@ PwmOut pwmw_1(p25);
 PwmOut pwmw_2(p26);
 
 bool hallstatus[3];
-InterruptIn hall1(p5);
-InterruptIn hall2(p6);
-InterruptIn hall3(p7);
+InterruptIn hall1(p15);
+InterruptIn hall2(p16);
+InterruptIn hall3(p17);
 
 AnalogIn throttle(p19); // throttle is 0.0-1.0 float value. throttle value is read from some analog read pin.
 
 Ticker tim;
-InterruptIn SW1(p13);  // up frequency pin.
-InterruptIn SW2(p15);  // down frequency pin.
+InterruptIn SW1(p12);  // up frequency pin.
+InterruptIn SW2(p14);  // down frequency pin.
 int freq = MIN_FREQ;   // running frequency value.
 float dx = 0;
 
@@ -42,10 +49,12 @@ void bldcval(){
     if (hallstatus[0]) HallVal += 1;
     if (hallstatus[1]) HallVal += 2;
     if (hallstatus[2]) HallVal += 4;
-    
+    DBG("bldcval = %d\r\n", HallVal);
+
     switch (HallVal) {
         // step-1
         case 5:
+            DBG("Step-1\r\n");
             pwmu_1 = 0.0;
             pwmu_2 = 1.0;
             
@@ -58,6 +67,7 @@ void bldcval(){
 
         // step-2
         case 1:
+            DBG("Step-2\r\n");
             pwmu_1 = throttle;
             pwmu_2 = 0.0;
             
@@ -70,6 +80,7 @@ void bldcval(){
 
         // step-3
         case 3:
+            DBG("Step-3\r\n");
             pwmu_1 = throttle;
             pwmu_2 = 0.0;
             
@@ -82,6 +93,7 @@ void bldcval(){
 
         // step-4
         case 2:
+            DBG("Step-4\r\n");
             pwmu_1 = 0.0;
             pwmu_2 = 1.0;
             
@@ -94,6 +106,7 @@ void bldcval(){
 
         // step-5
         case 6:
+            DBG("Step-5\r\n");
             pwmu_1 = 1.0;
             pwmu_2 = 0.0;
             
@@ -106,6 +119,7 @@ void bldcval(){
 
         // step-6
         case 4:
+            DBG("Step-6\r\n");
             pwmu_1 = 1.0;
             pwmu_2 = 0.0;
             
@@ -126,6 +140,7 @@ void pushUp(){
     tim.detach();
     tim.attach(&bldcval, dx);
     cled = 1;
+    DBG("PushUp\r\n");
 }
 
 void pushDown(){
@@ -136,26 +151,33 @@ void pushDown(){
     tim.detach();
     tim.attach(&bldcval, dx);
     cled = 0;
+    DBG("PushDown\r\n");
 }
 
 // hall sensor check interrupt functions.
 void hall1interrupt_rise() {
     hallstatus[0] = true;
+    DBG("hall 1 high\r\n");
 }
 void hall1interrupt_fall() {
     hallstatus[0] = false;
+    DBG("hall 1 low\r\n");
 }
 void hall2interrupt_rise() {
     hallstatus[1] = true;
+    DBG("hall 2 high\r\n");
 }
 void hall2interrupt_fall() {
     hallstatus[1] = false;
+    DBG("hall 2 low\r\n");
 }
 void hall3interrupt_rise() {
     hallstatus[2] = true;
+    DBG("hall 3 high\r\n");
 }
 void hall3interrupt_fall() {
     hallstatus[2] = false;
+    DBG("hall 3 low\r\n");
 }
 
 int main() {
@@ -175,7 +197,7 @@ int main() {
     hall2.rise(&hall2interrupt_rise);
     hall2.fall(&hall2interrupt_fall);
     hall3.rise(&hall3interrupt_rise);
-    hall3.fall(&hall2interrupt_fall);
+    hall3.fall(&hall3interrupt_fall);
 
     // frequency controll
     dx = 1.0/(DX_LEN * freq);
