@@ -1,6 +1,6 @@
 #include "mbed.h"
 
-#define DEBUG 1
+#define DEBUG
 #ifdef DEBUG
 #define DBG(...) printf("" __VA_ARGS__)
 #else
@@ -14,14 +14,15 @@
 #define FREQ_SIZE 10
 #define MIN_FREQ 10
 #define MAX_FREQ 1000
-PwmOut pwmu_1(p21);
-PwmOut pwmu_2(p22);
 
-PwmOut pwmv_1(p23);
-PwmOut pwmv_2(p24);
+PwmOut pwmu_p(p21);
+PwmOut pwmu_n(p22);
 
-PwmOut pwmw_1(p25);
-PwmOut pwmw_2(p26);
+PwmOut pwmv_p(p23);
+PwmOut pwmv_n(p24);
+
+PwmOut pwmw_p(p25);
+PwmOut pwmw_n(p26);
 
 bool hallstatus[3];
 InterruptIn hall1(p15);
@@ -33,8 +34,10 @@ AnalogIn throttle(p19); // throttle is 0.0-1.0 float value. throttle value is re
 Ticker tim;
 InterruptIn SW1(p12);  // up frequency pin.
 InterruptIn SW2(p14);  // down frequency pin.
+InterruptIn SW3(p10);  // down frequency pin.
 int freq = MIN_FREQ;   // running frequency value.
 float dx = 0;
+bool is_initialized;
 
 DigitalOut cled(LED1); // test led pin.
 
@@ -49,85 +52,79 @@ void bldcval(){
     if (hallstatus[0]) HallVal += 1;
     if (hallstatus[1]) HallVal += 2;
     if (hallstatus[2]) HallVal += 4;
-    DBG("bldcval = %d\r\n", HallVal);
+    // DBG("bldcval = %d\r\n", HallVal);
 
     switch (HallVal) {
         // step-1
         case 5:
-            DBG("Step-1\r\n");
-            pwmu_1 = 0.0;
-            pwmu_2 = 1.0;
+            pwmu_p = 0.0;
+            pwmu_n = 1.0;
             
-            pwmv_1 = 1.0;
-            pwmv_2 = 0.0;
+            pwmv_p = 1.0;
+            pwmv_n = 0.0;
             
-            pwmw_1 = throttle;
-            pwmw_2 = 0.0;
+            pwmw_p = throttle;
+            pwmw_n = 0.0;
         break;
 
         // step-2
         case 1:
-            DBG("Step-2\r\n");
-            pwmu_1 = throttle;
-            pwmu_2 = 0.0;
+            pwmu_p = throttle;
+            pwmu_n = 0.0;
             
-            pwmv_1 = 1.0;
-            pwmv_2 = 0.0;
+            pwmv_p = 1.0;
+            pwmv_n = 0.0;
             
-            pwmw_1 = 0.0;
-            pwmw_2 = 1.0;
+            pwmw_p = 0.0;
+            pwmw_n = 1.0;
         break;
 
         // step-3
         case 3:
-            DBG("Step-3\r\n");
-            pwmu_1 = throttle;
-            pwmu_2 = 0.0;
+            pwmu_p = throttle;
+            pwmu_n = 0.0;
             
-            pwmv_1 = 0.0;
-            pwmv_2 = 1.0;
+            pwmv_p = 0.0;
+            pwmv_n = 1.0;
             
-            pwmw_1 = 1.0;
-            pwmw_2 = 0.0;
+            pwmw_p = 1.0;
+            pwmw_n = 0.0;
         break;
 
         // step-4
         case 2:
-            DBG("Step-4\r\n");
-            pwmu_1 = 0.0;
-            pwmu_2 = 1.0;
+            pwmu_p = 0.0;
+            pwmu_n = 1.0;
             
-            pwmv_1 = throttle;
-            pwmv_2 = 0.0;
+            pwmv_p = throttle;
+            pwmv_n = 0.0;
             
-            pwmw_1 = 1.0;
-            pwmw_2 = 0.0;
+            pwmw_p = 1.0;
+            pwmw_n = 0.0;
         break;
 
         // step-5
         case 6:
-            DBG("Step-5\r\n");
-            pwmu_1 = 1.0;
-            pwmu_2 = 0.0;
+            pwmu_p = 1.0;
+            pwmu_n = 0.0;
             
-            pwmv_1 = throttle;
-            pwmv_2 = 0.0;
+            pwmv_p = throttle;
+            pwmv_n = 0.0;
             
-            pwmw_1 = 0.0;
-            pwmw_2 = 1.0;
+            pwmw_p = 0.0;
+            pwmw_n = 1.0;
         break;
 
         // step-6
         case 4:
-            DBG("Step-6\r\n");
-            pwmu_1 = 1.0;
-            pwmu_2 = 0.0;
+            pwmu_p = 1.0;
+            pwmu_n = 0.0;
             
-            pwmv_1 = 0.0;
-            pwmv_2 = 1.0;
+            pwmv_p = 0.0;
+            pwmv_n = 1.0;
             
-            pwmw_1 = throttle;
-            pwmw_2 = 0.0;
+            pwmw_p = throttle;
+            pwmw_n = 0.0;
         break;
     }
 }
@@ -140,7 +137,7 @@ void pushUp(){
     tim.detach();
     tim.attach(&bldcval, dx);
     cled = 1;
-    DBG("PushUp\r\n");
+    DBG("now : %d\r\n", freq);
 }
 
 void pushDown(){
@@ -151,9 +148,24 @@ void pushDown(){
     tim.detach();
     tim.attach(&bldcval, dx);
     cled = 0;
-    DBG("PushDown\r\n");
+    DBG("now : %d\r\n", freq);
 }
 
+void initialize() {
+    if (!is_initialized) {
+        pwmu_n = 1.0;
+        pwmv_n = 1.0;
+        pwmw_n = 1.0;
+        is_initialized = true;
+        printf("initialize\r\n");
+    } else {
+        pwmu_n = 0.0;
+        pwmv_n = 0.0;
+        pwmw_n = 0.0;
+        printf("already initialized\r\n");
+    }
+}
+    
 // hall sensor check interrupt functions.
 void hall1interrupt_rise() {
     hallstatus[0] = true;
@@ -182,13 +194,13 @@ void hall3interrupt_fall() {
 
 int main() {
     // output pwm value
-    pwmu_1.period_us(PWM_T_TIME);
-    pwmv_1.period_us(PWM_T_TIME);
-    pwmw_1.period_us(PWM_T_TIME);
+    pwmu_p.period_us(PWM_T_TIME);
+    pwmv_p.period_us(PWM_T_TIME);
+    pwmw_p.period_us(PWM_T_TIME);
     
-    pwmu_2.period_us(PWM_T_TIME);
-    pwmv_2.period_us(PWM_T_TIME);
-    pwmw_2.period_us(PWM_T_TIME);
+    pwmu_n.period_us(PWM_T_TIME);
+    pwmv_n.period_us(PWM_T_TIME);
+    pwmw_n.period_us(PWM_T_TIME);
     
     // hall sensor status
     hallstatus[0] = hallstatus[1] = hallstatus[2] = false;
@@ -204,8 +216,12 @@ int main() {
     SW1.rise(&pushUp);
     SW2.rise(&pushDown);
     tim.attach(&bldcval, dx);
+    
+    // initialize 
+    is_initialized = false;
+    SW3.rise(&initialize);
+    
     while(1) {
         wait(1);
     }
 }
-
