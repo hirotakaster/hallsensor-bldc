@@ -7,12 +7,13 @@
 #define DBG(...)
 #endif
 
+// #define HALL_LED_CHECK
 
 #define DX_LEN 20
-#define PWM_T_TIME 100
+#define PWM_T_TIME 10
 
-#define FREQ_SIZE 10
-#define MIN_FREQ 10
+#define FREQ_SIZE 1
+#define MIN_FREQ 1
 #define MAX_FREQ 1000
 
 PwmOut pwmu_p(p21);
@@ -29,7 +30,8 @@ InterruptIn hall1(p15);
 InterruptIn hall2(p16);
 InterruptIn hall3(p17);
 
-AnalogIn throttle(p19); // throttle is 0.0-1.0 float value. throttle value is read from some analog read pin.
+// AnalogIn throttle(p19); // throttle is 0.0-1.0 float value. throttle value is read from some analog read pin.
+float throttle = 1.0;
 
 Ticker tim;
 InterruptIn SW1(p12);  // up frequency pin.
@@ -56,7 +58,7 @@ void bldcval(){
 
     switch (HallVal) {
         // step-1
-        case 5:
+        case 1:
             pwmu_p = 0.0;
             pwmu_n = 1.0;
             
@@ -65,34 +67,37 @@ void bldcval(){
             
             pwmw_p = throttle;
             pwmw_n = 0.0;
+            // DBG("step-1\r\n");
         break;
 
         // step-2
-        case 1:
-            pwmu_p = throttle;
-            pwmu_n = 0.0;
-            
-            pwmv_p = 1.0;
-            pwmv_n = 0.0;
-            
-            pwmw_p = 0.0;
-            pwmw_n = 1.0;
-        break;
-
-        // step-3
         case 3:
             pwmu_p = throttle;
             pwmu_n = 0.0;
             
+            pwmv_p = 1.0;
+            pwmv_n = 0.0;
+            
+            pwmw_p = 0.0;
+            pwmw_n = 1.0;
+            // DBG("step-2\r\n");
+        break;
+
+        // step-3
+        case 7:
+            pwmu_p = throttle;
+            pwmu_n = 0.0;
+            
             pwmv_p = 0.0;
             pwmv_n = 1.0;
             
             pwmw_p = 1.0;
             pwmw_n = 0.0;
+            // DBG("step-3\r\n");
         break;
 
         // step-4
-        case 2:
+        case 6:
             pwmu_p = 0.0;
             pwmu_n = 1.0;
             
@@ -101,10 +106,11 @@ void bldcval(){
             
             pwmw_p = 1.0;
             pwmw_n = 0.0;
+            // DBG("step-4\r\n");
         break;
 
         // step-5
-        case 6:
+        case 4:
             pwmu_p = 1.0;
             pwmu_n = 0.0;
             
@@ -113,10 +119,11 @@ void bldcval(){
             
             pwmw_p = 0.0;
             pwmw_n = 1.0;
+            // DBG("step-5\r\n");
         break;
 
         // step-6
-        case 4:
+        case 0:
             pwmu_p = 1.0;
             pwmu_n = 0.0;
             
@@ -125,6 +132,7 @@ void bldcval(){
             
             pwmw_p = throttle;
             pwmw_n = 0.0;
+            // DBG("step-6\r\n");
         break;
     }
 }
@@ -169,27 +177,51 @@ void initialize() {
 // hall sensor check interrupt functions.
 void hall1interrupt_rise() {
     hallstatus[0] = true;
+#ifdef HALL_LED_CHECK
+    pwmu_p = 1.0;
+    pwmu_n = 0.0;
     DBG("hall 1 high\r\n");
+#endif
 }
 void hall1interrupt_fall() {
     hallstatus[0] = false;
+#ifdef HALL_LED_CHECK
+    pwmu_p = 0.0;
+    pwmu_n = 1.0;
     DBG("hall 1 low\r\n");
+#endif
 }
 void hall2interrupt_rise() {
     hallstatus[1] = true;
+#ifdef HALL_LED_CHECK
+    pwmv_p = 1.0;
+    pwmv_n = 0.0;
     DBG("hall 2 high\r\n");
+#endif
 }
 void hall2interrupt_fall() {
     hallstatus[1] = false;
+#ifdef HALL_LED_CHECK
+    pwmv_p = 0.0;
+    pwmv_n = 1.0;
     DBG("hall 2 low\r\n");
+#endif       
 }
 void hall3interrupt_rise() {
     hallstatus[2] = true;
+#ifdef HALL_LED_CHECK
+    pwmw_p = 1.0;
+    pwmw_n = 0.0;
     DBG("hall 3 high\r\n");
+#endif
 }
 void hall3interrupt_fall() {
     hallstatus[2] = false;
+#ifdef HALL_LED_CHECK
+    pwmw_p = 0.0;
+    pwmw_n = 1.0;
     DBG("hall 3 low\r\n");
+#endif
 }
 
 int main() {
