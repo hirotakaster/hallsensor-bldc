@@ -56,6 +56,7 @@ void bldcval(){
     if (hallstatus[2]) HallVal += 4;
     // DBG("bldcval = %d\r\n", HallVal);
 
+    // this switch case is needed hall sensor digital out matrix-pattern.
     switch (HallVal) {
         // step-1
         case 1:
