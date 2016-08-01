@@ -152,7 +152,7 @@ void bldcval(){
 void initialize() {
     if (!is_initialized) {
         pwmu_p = pwmv_p = pwmw_p = 0.0;
-        pwmu_n = pwmv_n = pwmw_n 1.0;
+        pwmu_n = pwmv_n = pwmw_n = 1.0;
         is_initialized = true;
         wait(0.5);
         DBG("initialize\r\n");
