@@ -13,7 +13,6 @@ Serial cycon(PC_10, PC_11);
 #define DX_LEN 1
 #define PWM_PERIOD_TIME 15
 #define PWM_PULSE_WIDTH 10
-
 #define PWM_DEAD_UTIME 5
 
 #define FREQ_SIZE 100
