@@ -13,10 +13,11 @@ Serial cycon(PC_10, PC_11);
 #define DX_LEN 1
 #define PWM_PERIOD_TIME 15
 #define PWM_PULSE_WIDTH 10
+
 #define PWM_DEAD_UTIME 5
 
 #define FREQ_SIZE 100
-#define MIN_FREQ 500
+#define MIN_FREQ 1000
 #define MAX_FREQ 10000
 
 PwmOut pwmu_p(PA_10);
@@ -32,11 +33,12 @@ DigitalIn hall1(PC_7);
 DigitalIn hall2(PB_6);
 DigitalIn hall3(PA_7);
 
-InterruptIn startup(PA_6);
-InterruptIn frequp(PA_5);
-InterruptIn freqdow(PB_9);
+InterruptIn startup(PA_11);
+InterruptIn frequp(PA_12);
+InterruptIn freqdow(PC_5);
 
-DigitalOut powerselector(PC_8);
+DigitalOut powerselector(PC_3);
+AnalogIn volteValue(PC_2);
 
 Ticker monitoring;
 Ticker controller;
@@ -153,6 +155,7 @@ void initialize() {
     if (!is_initialized) {
         pwmu_p = pwmv_p = pwmw_p = 0.0;
         pwmu_n = pwmv_n = pwmw_n = 1.0;
+
         is_initialized = true;
         wait(0.5);
         DBG("initialize\r\n");
@@ -160,15 +163,16 @@ void initialize() {
     } else if (start_motor == false) {
         pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n = 0.0;
         start_motor = true;
-        powerselector = 1;
+        // powerselector = 1;
         wait(0.5);
 
         DBG("start motor\r\n");
     } else if (start_motor == true) {
-        start_motor = false;
         pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n = 0.0;
-        powerselector = 0;
+        start_motor = false;
+        // powerselector = 0;
         wait(0.5);
+        freq = MIN_FREQ;
 
         DBG("stop motor\r\n");
     }
@@ -202,12 +206,12 @@ int main() {
     start_motor = false;
     hallonoff = false;
     dx = 1.0/(DX_LEN * freq);
+    powerselector = 0;
     
     startup.rise(&initialize);
     frequp.rise(&pushUp);
     controller.attach(&bldcval, dx);
 
-    int timecnt = 0;
     while(1) {
         wait(1);
         
