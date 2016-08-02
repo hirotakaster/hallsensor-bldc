@@ -17,7 +17,7 @@ Serial cycon(PC_10, PC_11);
 #define PWM_DEAD_UTIME 5
 
 #define FREQ_SIZE 100
-#define MIN_FREQ 1000
+#define MIN_FREQ 500
 #define MAX_FREQ 10000
 
 PwmOut pwmu_p(PA_10);
@@ -37,113 +37,123 @@ InterruptIn startup(PA_11);
 InterruptIn frequp(PA_12);
 InterruptIn freqdow(PC_5);
 
-DigitalOut powerselector(PC_3);
-AnalogIn volteValue(PC_2);
+DigitalOut powerselector(PC_8);
+AnalogIn volteValue(PC_1);
 
 Ticker monitoring;
 Ticker controller;
 
-int freq = MIN_FREQ;   // running frequency value.
+int nowFreq = MIN_FREQ;   // running frequency value.
+int lastFreq;
+
 int rpmcounter;
 float dx;
 bool is_initialized;
 bool start_motor;
+float throttle = 0.7;
 
 bool hallonoff = false;
 
-int HallVal = 0;
-int lastHallVal = 0;
+int hallVal = 0;
+int lasthallVal = 0;
 
 void bldcval(){
     
     if (start_motor) {
 
-        HallVal = 0;
-        if (hall1) { HallVal += 1; rpmcounter++;}
-        if (hall2) HallVal += 2;
-        if (hall3) HallVal += 4;
-        // DBG("bldcval = %d\r\n", HallVal);
+        hallVal = 0;
+        if (hall1) {
+            hallVal += 1;
+            rpmcounter++;
+        }
+        if (hall2) hallVal += 2;
+        if (hall3) hallVal += 4;
+        // DBG("bldcval = %d\r\n", hallVal);
         
         // save hall val
-        if (HallVal != lastHallVal) {
-            lastHallVal = HallVal;
+        if (hallVal != lasthallVal) {
+            lasthallVal = hallVal;
+            
             // for dead time.
             pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n = 0.0;
             wait_us(PWM_DEAD_UTIME);
-        }
+
+            switch (hallVal) {
+                // step-1
+                case 5:
+                    pwmu_p = 0.0;
+                    pwmu_n = 0.0;
+                    
+                    pwmv_p = 0.0;
+                    pwmv_n = 1.0;
+                    
+                    pwmw_p = throttle;
+                    pwmw_n = 0.0;
+                break;
         
-        switch (HallVal) {
-            // step-1
-            case 5:
-                pwmu_p = 0.0;
-                pwmu_n = 0.0;
-                
-                pwmv_p = 0.0;
-                pwmv_n = 1.0;
-                
-                pwmw_p = 1.0;
-                pwmw_n = 0.0;
-            break;
-    
-            // step-2
-            case 1:
-                pwmu_p = 1.0;
-                pwmu_n = 0.0;
-                
-                pwmv_p = 0.0;
-                pwmv_n = 1.0;
-                
-                pwmw_p = 0.0;
-                pwmw_n = 0.0;
-            break;
-    
-            // step-3
-            case 3:
-                pwmu_p = 1.0;
-                pwmu_n = 0.0;
-                
-                pwmv_p = 0.0;
-                pwmv_n = 0.0;
-                
-                pwmw_p = 0.0;
-                pwmw_n = 1.0;
-            break;
-    
-            // step-4
-            case 2:
-                pwmu_p = 0.0;
-                pwmu_n = 0.0;
-                
-                pwmv_p = 1.0;
-                pwmv_n = 0.0;
-                
-                pwmw_p = 0.0;
-                pwmw_n = 1.0;
-            break;
-    
-            // step-5
-            case 6:
-                pwmu_p = 0.0;
-                pwmu_n = 1.0;
-                
-                pwmv_p = 1.0;
-                pwmv_n = 0.0;
-                
-                pwmw_p = 0.0;
-                pwmw_n = 0.0;
-            break;
-    
-            // step-6
-            case 4:
-                pwmu_p = 0.0;
-                pwmu_n = 1.0;
-                
-                pwmv_p = 0.0;
-                pwmv_n = 0.0;
-                
-                pwmw_p = 1.0;
-                pwmw_n = 0.0;
-            break;
+                // step-2
+                case 1:
+                    pwmu_p = throttle;
+                    pwmu_n = 0.0;
+                    
+                    pwmv_p = 0.0;
+                    pwmv_n = 1.0;
+                    
+                    pwmw_p = 0.0;
+                    pwmw_n = 0.0;
+                break;
+        
+                // step-3
+                case 3:
+                    pwmu_p = throttle;
+                    pwmu_n = 0.0;
+                    
+                    pwmv_p = 0.0;
+                    pwmv_n = 0.0;
+                    
+                    pwmw_p = 0.0;
+                    pwmw_n = 1.0;
+                break;
+        
+                // step-4
+                case 2:
+                    pwmu_p = 0.0;
+                    pwmu_n = 0.0;
+                    
+                    pwmv_p = throttle;
+                    pwmv_n = 0.0;
+                    
+                    pwmw_p = 0.0;
+                    pwmw_n = 1.0;
+                break;
+        
+                // step-5
+                case 6:
+                    pwmu_p = 0.0;
+                    pwmu_n = 1.0;
+                    
+                    pwmv_p = throttle;
+                    pwmv_n = 0.0;
+                    
+                    pwmw_p = 0.0;
+                    pwmw_n = 0.0;
+                break;
+        
+                // step-6
+                case 4:
+                    pwmu_p = 0.0;
+                    pwmu_n = 1.0;
+                    
+                    pwmv_p = 0.0;
+                    pwmv_n = 0.0;
+                    
+                    pwmw_p = throttle;
+                    pwmw_n = 0.0;
+                break;
+            }
+            
+            // rpm counter
+            if (hall1) rpmcounter++;
         }
 
     } else {
@@ -155,6 +165,8 @@ void initialize() {
     if (!is_initialized) {
         pwmu_p = pwmv_p = pwmw_p = 0.0;
         pwmu_n = pwmv_n = pwmw_n = 1.0;
+
+        // powerselector = 1;
 
         is_initialized = true;
         wait(0.5);
@@ -172,21 +184,30 @@ void initialize() {
         start_motor = false;
         // powerselector = 0;
         wait(0.5);
-        freq = MIN_FREQ;
+        lastFreq = nowFreq;
+        nowFreq = MIN_FREQ;
 
         DBG("stop motor\r\n");
     }
 }
 
 void pushUp(){
-    freq += FREQ_SIZE;
-    if (freq >= MAX_FREQ) freq = MAX_FREQ;
+    lastFreq = nowFreq;
+    nowFreq += FREQ_SIZE;
+    if (nowFreq >= MAX_FREQ) nowFreq = MAX_FREQ;
 
-    dx = 1.0/(DX_LEN * freq);
+    dx = 1.0/(DX_LEN * nowFreq);
     controller.detach();
     controller.attach(&bldcval, dx);
 
-    DBG("freq = %d\r\n", freq);
+    DBG("freq = %d\r\n", nowFreq);
+}
+
+void monitoringTimer() {            
+    // write logging   
+    DBG("rpm = %d\r\n", (rpmcounter/20) * 60);
+    cycon.printf("%d\r\n", (rpmcounter/20) * 60);
+    rpmcounter = 0;
 }
 
 int main() {
@@ -205,19 +226,18 @@ int main() {
     is_initialized = false;
     start_motor = false;
     hallonoff = false;
-    dx = 1.0/(DX_LEN * freq);
+    dx = 1.0/(DX_LEN * nowFreq);
     powerselector = 0;
     
-    startup.rise(&initialize);
-    frequp.rise(&pushUp);
+    startup.fall(&initialize);
+    frequp.fall(&pushUp);
     controller.attach(&bldcval, dx);
+    monitoring.attach(&monitoringTimer, 1);
 
     while(1) {
-        wait(1);
+        wait(0.1);
         
-        // write logging   
-        DBG("rpm = %d\r\n", (rpmcounter/20) * 60);
-        cycon.printf("%d\r\n", (rpmcounter/20) * 60);
-        rpmcounter = 0;
+        // if (startup == 1)
+        //     initialize();
     }
 }
