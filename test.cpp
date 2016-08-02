@@ -128,52 +128,28 @@ void bldcval(){
         }
 
     } else {
-        pwmu_p = 0.0;
-        pwmu_n = 0.0;
-        
-        pwmv_p = 0.0;
-        pwmv_n = 0.0;
-        
-        pwmw_p = 0.0;
-        pwmw_n = 0.0;
+        pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n =  0.0;
     }
 }
 
 void initialize() {
     if (!is_initialized) {
-        pwmu_p = 0.0;
-        pwmv_p = 0.0;
-        pwmw_p = 0.0;
-        
-        pwmu_n = 1.0;
-        pwmv_n = 1.0;
-        pwmw_n = 1.0;
+        pwmu_p = pwmv_p = pwmw_p = 0.0;
+        pwmu_n = pwmv_n = pwmw_n = 1.0;
         is_initialized = true;
         wait(0.5);
 
         DBG("initialize\r\n");
 
     } else if (start_motor == false) {
-        pwmu_p = 0.0;
-        pwmv_p = 0.0;
-        pwmw_p = 0.0;
-        
-        pwmu_n = 0.0;
-        pwmv_n = 0.0;
-        pwmw_n = 0.0;
+        pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n =  0.0;
         start_motor = true;
         wait(0.5);
 
         DBG("start motor\r\n");
 
     } else if (start_motor == true) {
-        pwmu_p = 0.0;
-        pwmv_p = 0.0;
-        pwmw_p = 0.0;
-
-        pwmu_n = 0.0;
-        pwmv_n = 0.0;
-        pwmw_n = 0.0;
+        pwmu_p = pwmu_n = pwmv_p = pwmv_n = pwmw_p = pwmw_n =  0.0;
         start_motor = false;
         wait(0.5);
 
@@ -210,8 +186,8 @@ int main() {
     hallonoff = false;
     dx = 1.0/(DX_LEN * freq);
     
-    startup.rise(&initialize);
-    frequp.rise(&pushUp);
+    startup.fall(&initialize);
+    frequp.fall(&pushUp);
     controller.attach(&bldcval, dx);
 
     while(1) {
